@@ -78,6 +78,11 @@ public class WxCpServiceImpl implements WxCpService {
 
   protected WxSessionManager sessionManager = new StandardSessionManager();
 
+  /**
+   * 临时文件目录
+   */
+  protected File tmpDirFile;
+
   public boolean checkSignature(String msgSignature, String timestamp, String nonce, String data) {
     try {
       return SHA1.gen(wxCpConfigStorage.getToken(), timestamp, nonce, data).equals(msgSignature);
@@ -112,8 +117,10 @@ public class WxCpServiceImpl implements WxCpService {
               httpGet.setConfig(config);
             }
             CloseableHttpClient httpclient = getHttpclient();
-            CloseableHttpResponse response = httpclient.execute(httpGet);
-            String resultContent = new BasicResponseHandler().handleResponse(response);
+            String resultContent = null;
+            try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
+              resultContent = new BasicResponseHandler().handleResponse(response);
+            }
             WxError error = WxError.fromJson(resultContent);
             if (error.getErrorCode() != 0) {
               throw new WxErrorException(error);
@@ -236,7 +243,8 @@ public class WxCpServiceImpl implements WxCpService {
 
   public File mediaDownload(String media_id) throws WxErrorException {
     String url = "https://qyapi.weixin.qq.com/cgi-bin/media/get";
-    return execute(new MediaDownloadRequestExecutor(), url, "media_id=" + media_id);
+    
+    return execute(new MediaDownloadRequestExecutor(wxCpConfigStorage.getTmpDirFile()), url, "media_id=" + media_id);
   }
 
 
@@ -637,6 +645,14 @@ public class WxCpServiceImpl implements WxCpService {
   @Override
   public void setSessionManager(WxSessionManager sessionManager) {
     this.sessionManager = sessionManager;
+  }
+  
+  public File getTmpDirFile() {
+    return tmpDirFile;
+  }
+
+  public void setTmpDirFile(File tmpDirFile) {
+    this.tmpDirFile = tmpDirFile;
   }
 
   public static void main(String[] args) {

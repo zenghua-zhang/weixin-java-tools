@@ -25,6 +25,18 @@ import java.util.regex.Pattern;
  *
  */
 public class MediaDownloadRequestExecutor implements RequestExecutor<File, String> {
+	
+  private File tmpDirFile;
+
+  public MediaDownloadRequestExecutor() {
+    super();
+  }
+
+  public MediaDownloadRequestExecutor(File tmpDirFile) {
+    super();
+    this.tmpDirFile = tmpDirFile;
+  }
+  
 
   @Override
   public File execute(CloseableHttpClient httpclient, HttpHost httpProxy, String uri, String queryParam) throws WxErrorException, ClientProtocolException, IOException {
@@ -41,26 +53,29 @@ public class MediaDownloadRequestExecutor implements RequestExecutor<File, Strin
       httpGet.setConfig(config);
     }
 
-    CloseableHttpResponse response = httpclient.execute(httpGet);
+    try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
 
-    Header[] contentTypeHeader = response.getHeaders("Content-Type");
-    if (contentTypeHeader != null && contentTypeHeader.length > 0) {
-      // 下载媒体文件出错
-      if (ContentType.TEXT_PLAIN.getMimeType().equals(contentTypeHeader[0].getValue())) {
-        String responseContent = Utf8ResponseHandler.INSTANCE.handleResponse(response);
-        throw new WxErrorException(WxError.fromJson(responseContent));
+      Header[] contentTypeHeader = response.getHeaders("Content-Type");
+      if (contentTypeHeader != null && contentTypeHeader.length > 0) {
+        // 下载媒体文件出错
+        if (ContentType.TEXT_PLAIN.getMimeType().equals(contentTypeHeader[0].getValue())) {
+          String responseContent = Utf8ResponseHandler.INSTANCE.handleResponse(response);
+          throw new WxErrorException(WxError.fromJson(responseContent));
+        }
       }
+      InputStream inputStream = InputStreamResponseHandler.INSTANCE.handleResponse(response);
+
+      // 视频文件不支持下载
+      String fileName = getFileName(response);
+      if (StringUtils.isBlank(fileName)) {
+        return null;
+      }
+      String[] name_ext = fileName.split("\\.");
+      File localFile = FileUtils.createTmpFile(inputStream, name_ext[0], name_ext[1], tmpDirFile);
+      return localFile;
+
     }
-    InputStream inputStream = InputStreamResponseHandler.INSTANCE.handleResponse(response);
-    
-    // 视频文件不支持下载
-    String fileName = getFileName(response);
-    if (StringUtils.isBlank(fileName)) {
-      return null;
-    }
-    String[] name_ext = fileName.split("\\.");
-    File localFile = FileUtils.createTmpFile(inputStream, name_ext[0], name_ext[1]);
-    return localFile;
+
   }
 
   protected String getFileName(CloseableHttpResponse response) {

@@ -1,5 +1,7 @@
 package me.chanjar.weixin.mp.api;
 
+import java.io.File;
+
 import me.chanjar.weixin.common.bean.WxAccessToken;
 
 /**
@@ -11,8 +13,8 @@ public class WxMpInMemoryConfigStorage implements WxMpConfigStorage {
 
   protected volatile String appId;
   protected volatile String secret;
-    protected volatile String partnerId;
-    protected volatile String partnerKey;
+  protected volatile String partnerId;
+  protected volatile String partnerKey;
   protected volatile String token;
   protected volatile String accessToken;
   protected volatile String aesKey;
@@ -28,6 +30,11 @@ public class WxMpInMemoryConfigStorage implements WxMpConfigStorage {
   protected volatile String jsapiTicket;
   protected volatile long jsapiTicketExpiresTime;
 
+  /**
+   * 临时文件目录
+   */
+  protected volatile File tmpDirFile;
+  
   public String getAccessToken() {
     return this.accessToken;
   }
@@ -181,24 +188,35 @@ public class WxMpInMemoryConfigStorage implements WxMpConfigStorage {
         ", http_proxy_password='" + http_proxy_password + '\'' +
         ", jsapiTicket='" + jsapiTicket + '\'' +
         ", jsapiTicketExpiresTime='" + jsapiTicketExpiresTime + '\'' +
+        ", tmpDirFile='" + tmpDirFile + '\'' +
         '}';
   }
 
-    @Override
-    public String getPartnerId() {
-        return partnerId;
-    }
+  @Override
+  public String getPartnerId() {
+      return partnerId;
+  }
 
-    public void setPartnerId(String partnerId) {
-        this.partnerId = partnerId;
-    }
+  public void setPartnerId(String partnerId) {
+      this.partnerId = partnerId;
+  }
 
-    @Override
-    public String getPartnerKey() {
-        return partnerKey;
-    }
+  @Override
+  public String getPartnerKey() {
+      return partnerKey;
+  }
 
-    public void setPartnerKey(String partnerKey) {
-        this.partnerKey = partnerKey;
-    }
+  public void setPartnerKey(String partnerKey) {
+      this.partnerKey = partnerKey;
+  }
+
+  @Override
+  public File getTmpDirFile() {
+    return this.tmpDirFile;
+  }
+
+  public void setTmpDirFile(File tmpDirFile) {
+    this.tmpDirFile = tmpDirFile;
+  }
+
 }
